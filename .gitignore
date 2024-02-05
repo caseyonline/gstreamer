@@ -1,0 +1,5 @@
+#complied object files
+*.o
+
+#executables
+gstreamer
