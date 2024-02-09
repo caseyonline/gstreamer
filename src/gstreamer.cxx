@@ -17,6 +17,10 @@ int main(int ac, char* av[]) {
       test1(ac, av);
       break;
 
+    case 2:
+      test2(ac, av);
+      break;
+
     default:
       cout << "undefined test" << endl;
   }
