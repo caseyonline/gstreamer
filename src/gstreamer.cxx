@@ -13,14 +13,9 @@ int main(int ac, char* av[]) {
   else
   switch( atoi(av[1]) )
   {
-    case 1:
-      test1(ac, av);
-      break;
-
-    case 2:
-      test2(ac, av);
-      break;
-
+    case 1:test1(ac, av);break;
+    case 2:test2(ac, av);break;
+    case 3:test3(ac, av);break;
     default:
       cout << "undefined test" << endl;
   }
