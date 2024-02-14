@@ -1,8 +1,9 @@
 CC=g++
-CFLAGS=`pkg-config --cflags --libs gstreamer-1.0`
+CFLAGS=`pkg-config --cflags --libs gstreamer-1.0 gstreamer-audio-1.0`
 OBJ = src/test1.o \
 			src/test2.o \
 			src/test3.o \
+			src/test8.o \
 			src/gstreamer.o
 
 SYS=_$(shell uname -s)
