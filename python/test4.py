@@ -16,6 +16,15 @@ def on_message(bus, message):
         gstobj = message.src
         objectname = gstobj.get_name()
         print("pipeline element: name=" + structname + " string=" + structstring + " objectname=" + objectname)
+    elif message.type == Gst.MessageType.STREAM_STATUS:
+        msg = str(message.parse_stream_status())
+        print("pipeline streamStatus="+msg)
+    elif message.type == Gst.MessageType.ERROR:
+        msg = str(message.parse_error())
+        print("pipeline error="+msg)
+    elif message.type == Gst.MessageType.WARNING:
+        err, debug = message.parse_warning()
+        print("Warning: "+str(err)+" - "+str(debug))
     else:
         print("pipeline type="+str(int(message.type)))
 
@@ -29,59 +38,46 @@ def on_message_src(bus, message):
 def on_message_tsdemux(bus, message):
     print("tsdemux type="+str(int(message.type)))
 
+def on_pad_added(src, new_pad):
+    print("Received new pad '{0:s}' from '{1:s}'".format(new_pad.get_name(),src.get_name()))
+    new_pad.link(fileout.get_static_pad("sink"))
+
 Gst.init(None)
 
-# pipeline = udpsrc uri='udp://192.168.1.192:2000' ! queue ! tsdemux program-number=1 ! queue ! h264parse ! 'video/x-h264' ! queue ! mpegtsmux ! queue ! filesink location='/home/caseymac/Videos/tests/test.ts'
+# pipeline = udpsrc uri='udp://192.168.1.192:2000' ! queue ! tsdemux ! filesink location='/home/caseymac/Videos/tests/test.out'
 
 pipeline = Gst.Pipeline('the_pipeline')
 
 udpsrc = Gst.ElementFactory.make('udpsrc','my_source')
 queue1 = Gst.ElementFactory.make('queue','my_queue1')
-queue2 = Gst.ElementFactory.make('queue','my_queue2')
-queue3 = Gst.ElementFactory.make('queue','my_queue3')
-queue4 = Gst.ElementFactory.make('queue','my_queue4')
 tsdemux = Gst.ElementFactory.make('tsdemux','my_tsdemux')
-h264parse = Gst.ElementFactory.make('h264parse','my_h264parse')
-mpegtsmux = Gst.ElementFactory.make('mpegtsmux','my_mpegtsmux')
 fileout = Gst.ElementFactory.make('filesink','my_output')
-videocaps = Gst.caps_from_string('video/x-h264')
-capsfilter = Gst.ElementFactory.make('capsfilter','m_capsfilter')
+capsfilter = Gst.ElementFactory.make('capsfilter','my_capsfilter')
 
 udpsrc.set_property('uri','udp://192.168.1.192:2000')
-fileout.set_property('location', '/home/caseymac/Videos/tests/test.ts')
+fileout.set_property('location', '/home/caseymac/Videos/tests/test.out')
 tsdemux.set_property('program-number',1)
 tsdemux.set_property('emit-stats',True)
+videocaps = Gst.caps_from_string('video/x-h264')
 capsfilter.set_property('caps',videocaps)
 
 pipeline.add(queue1)
-pipeline.add(queue2)
-pipeline.add(queue3)
-pipeline.add(queue4)
 pipeline.add(fileout)
 pipeline.add(udpsrc)
 pipeline.add(tsdemux)
-pipeline.add(h264parse)
-pipeline.add(mpegtsmux)
 pipeline.add(capsfilter)
 
 udpsrc.link(queue1)
 queue1.link(tsdemux)
-tsdemux.link(queue2)
-queue2.link(h264parse)
-h264parse.link(capsfilter)
-capsfilter.link(queue3)
-queue3.link(mpegtsmux)
-mpegtsmux.link(queue4)
-queue4.link(fileout)
-
+tsdemux.connect('pad-added',on_pad_added)
 
 bus = pipeline.get_bus()
 bus.add_signal_watch()
 bus.connect("message",on_message)
 
-# queuebus = queue.get_bus()
-# queuebus.add_signal_watch()
-# queuebus.connect("message",on_message_queue)
+queuebus = queue1.get_bus()
+queuebus.add_signal_watch()
+queuebus.connect("message",on_message_queue)
 
 srcbus = udpsrc.get_bus()
 srcbus.add_signal_watch()

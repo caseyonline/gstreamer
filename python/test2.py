@@ -5,7 +5,7 @@ gi.require_version('Gst', '1.0')
 gi.require_version('GstVideo', '1.0') 
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
-from gi.repository import Gst, GObject, Gtk, GLib
+from gi.repository import Gst, GLib
 
 def on_message(bus, message):
 
@@ -16,6 +16,9 @@ def on_message(bus, message):
         gstobj = message.src
         objectname = gstobj.get_name()
         print("pipeline element: name=" + structname + " string=" + structstring + " objectname=" + objectname)
+    elif message.type == Gst.MessageType.ERROR:
+        msg = str(message.parse_error())
+        print("pipeline error="+msg)
     else:
         print("pipeline type="+str(int(message.type)))
 

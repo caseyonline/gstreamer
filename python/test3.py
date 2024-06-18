@@ -16,6 +16,12 @@ def on_message(bus, message):
         gstobj = message.src
         objectname = gstobj.get_name()
         print("pipeline element: name=" + structname + " string=" + structstring + " objectname=" + objectname)
+    elif message.type == Gst.MessageType.STREAM_STATUS:
+        msg = str(message.parse_stream_status())
+        print("pipeline streamStatus="+msg)
+    elif message.type == Gst.MessageType.STATE_CHANGED:
+        msg = str(message.parse_state_changed())
+        print("pipeline stateChange="+msg)
     else:
         struct = message.get_structure()
         structname = struct.get_name()
