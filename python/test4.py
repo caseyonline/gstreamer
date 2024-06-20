@@ -1,11 +1,16 @@
 import sys
 import time
+import threading
 import gi,re
 gi.require_version('Gst', '1.0')
 gi.require_version('GstVideo', '1.0') 
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
 from gi.repository import Gst, GObject, Gtk, GLib
+
+def on_period():
+   print("----------------------------------- on_period -----------------------------------")
+   threading.Timer(5, on_period).start()
 
 def on_message(bus, message):
 
@@ -15,7 +20,13 @@ def on_message(bus, message):
         structstring = struct.to_string()
         gstobj = message.src
         objectname = gstobj.get_name()
-        print("pipeline element: name=" + structname + " string=" + structstring + " objectname=" + objectname)
+        if "tsdemux" in structname:
+            pts = "-"
+            if struct.get_value('pts'):
+               pts = str(struct.get_value('pts'))
+            print("tsdemux stats >>> pid: %d, offset: %d, pts: %s" % (struct.get_value('pid'), struct.get_value('offset'), pts))
+        else:
+            print("pipeline element: name=" + structname + " string=" + structstring + " objectname=" + objectname)
     elif message.type == Gst.MessageType.STREAM_STATUS:
         msg = str(message.parse_stream_status())
         print("pipeline streamStatus="+msg)
@@ -24,7 +35,10 @@ def on_message(bus, message):
         print("pipeline error="+msg)
     elif message.type == Gst.MessageType.WARNING:
         err, debug = message.parse_warning()
-        print("Warning: "+str(err)+" - "+str(debug))
+        details = message.parse_warning_details()
+        if "continuity-mismatch" in details.get_value('warning-type'):
+           print("Packet Drop >>> packet: %d, stream: %d, pid: %i" % (details.get_value('packet'), details.get_value('stream'), details.get_value('pid')))
+
     else:
         print("pipeline type="+str(int(message.type)))
 
@@ -87,6 +101,7 @@ tsdemuxbus = tsdemux.get_bus()
 tsdemuxbus.add_signal_watch()
 tsdemuxbus.connect("message",on_message_tsdemux)
 
+on_period()
 
 pipeline.set_state(Gst.State.PLAYING)
 try:
