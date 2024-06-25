@@ -54,7 +54,8 @@ def on_message_tsdemux(bus, message):
 
 def on_pad_added(src, new_pad):
     print("Received new pad '{0:s}' from '{1:s}'".format(new_pad.get_name(),src.get_name()))
-    new_pad.link(fileout.get_static_pad("sink"))
+    if "video" in new_pad.get_name():
+        new_pad.link(fileout.get_static_pad("sink"))
 
 Gst.init(None)
 
@@ -109,6 +110,4 @@ try:
   while True:
     x.run()
 except Exception as e:
-  if fatal_exceptions:
-    raise
   print(str(e))

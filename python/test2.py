@@ -76,6 +76,4 @@ try:
   while True:
     x.run()
 except Exception as e:
-  if fatal_exceptions:
-    raise
   print(str(e))
