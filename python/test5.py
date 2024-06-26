@@ -1,3 +1,5 @@
+# sample code to handle a codec change in mid-stream from h.264 to mpeg2
+
 import sys
 import time
 import gi,re
@@ -26,6 +28,8 @@ def on_message(bus, message):
         err, debug = message.parse_warning()
         details = message.parse_warning_details()
         print("pipeline WARNING="+details.to_string())
+    elif message.type == Gst.MessageType.EOS:
+        print("**** EOS ****")
     else:
         print("pipeline type="+str(int(message.type)))
 
@@ -83,18 +87,7 @@ def on_pad_added(src, new_pad):
 
             elif "video/mpeg" in caps.to_string():
                 print("video/mpeg------------------------------------------------------------------------------")
-                # queue1SrcPad = queue1.get_static_pad("src")
-                # global global_new_pad
-                # global_new_pad = new_pad
-
                 new_pad.add_probe(Gst.PadProbeType.IDLE, on_probe_idle, None)
-                # tsdemux.unlink(h264parse1)
-                # h264parse1.unlink(capsfilter1)
-                # capsfilter1.unlink(queue2)
-                # new_pad.link(mpeg2video.get_static_pad("sink"))
-                # capsfilter1.set_property('caps',Gst.caps_from_string('video/mpeg, alignment=au'))
-                # mpeg2video.link(capsfilter1)
-                # capsfilter1.link(queue2)
 
 Gst.init(None)
 
@@ -119,7 +112,7 @@ mpegtsmux   = Gst.ElementFactory.make('mpegtsmux', 'my_mpegtsmux')
 fileout     = Gst.ElementFactory.make('filesink','my_output')
 
 if not udpsrc or not queue1 or not queue2 or not queue3 or not queue4 or not queue5 or not tsdemux or not h264parse1 or not h264parse2 or not capsfilter1A or not capsfilter2 or not nvtranscode or not mpegtsmux or not fileout:
-    print("Error creating elements")
+    print("Error creating element(s)")
     exit(0)
 
 # set properties
